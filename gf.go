@@ -1,4 +1,4 @@
-package main
+package swu
 
 import "math/big"
 
