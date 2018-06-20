@@ -39,8 +39,9 @@ func (g *GF) Add(a, b *big.Int) *big.Int {
 }
 
 func (g *GF) Sub(a, b *big.Int) *big.Int {
-	add := new(big.Int).Sub(a, b)
-	return new(big.Int).Mod(add, g.P)
+
+	negB := g.Neg(b)
+	return g.Add(a, negB)
 }
 
 func (g *GF) Mul(a, b *big.Int) *big.Int {
