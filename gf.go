@@ -35,18 +35,18 @@ func (g *GF) Inv(a *big.Int) *big.Int {
 
 func (g *GF) Add(a, b *big.Int) *big.Int {
 	add := new(big.Int).Add(a, b)
-	return new(big.Int).Mod(add, g.P)
+	return add.Mod(add, g.P)
 }
 
 func (g *GF) Sub(a, b *big.Int) *big.Int {
 
-	negB := g.Neg(b)
-	return g.Add(a, negB)
+	negB := new(big.Int).Sub(a, b)
+	return negB.Mod(negB, g.P)
 }
 
 func (g *GF) Mul(a, b *big.Int) *big.Int {
 	mul := new(big.Int).Mul(a, b)
-	return new(big.Int).Mod(mul, g.P)
+	return mul.Mod(mul, g.P)
 }
 
 func (g *GF) Div(a, b *big.Int) *big.Int {

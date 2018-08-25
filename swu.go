@@ -1,5 +1,9 @@
 package swu
 
+/*
+ Implementation of Shallue-Woestijne-Ulas algorithm in Go
+*/
+
 import (
 	"crypto/elliptic"
 	"crypto/sha256"
