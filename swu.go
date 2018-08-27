@@ -11,49 +11,84 @@ import (
 )
 
 var (
-	p   = elliptic.P256().Params().P
-	a   *big.Int
-	b   = elliptic.P256().Params().B
-	mba *big.Int
+	p        = elliptic.P256().Params().P
+	a        *big.Int
+	b        = elliptic.P256().Params().B
+	mba      *big.Int
+	F        = &GF{p}
+	p34, p14 *big.Int
 )
 
 func init() {
-	f := &GF{p}
-	a = f.Neg(Three)
-	mba = f.Neg(f.Div(b, a))
+	a = F.Neg(Three)
+	ba := F.Div(b, a)
+	mba = F.Neg(ba)
+	p3 := F.Sub(p, Three)
+	p34 = F.Div(p3, Four)
+	p1 := F.Add(p, One)
+	p14 = F.Div(p1, Four)
+	F.FreeInt(p3, p1, ba)
 }
 
 func HashToPoint(data []byte) (x, y *big.Int) {
-	f := &GF{p}
 
 	hash := sha256.Sum256(data)
 
-	t := new(big.Int).SetBytes(hash[:])
+	t := F.NewInt().SetBytes(hash[:])
 	t.Mod(t, p)
 
 	//alpha = -t^2
-	alpha := f.Neg(f.Square(t))
+	tt := F.Square(t)
+	F.FreeInt(t)
+
+	alpha := F.Neg(tt)
+
+	asq := F.Square(alpha)
+	asqa := F.Add(asq, alpha)
+	asqa1 := F.Add(One, F.Inv(asqa))
 
 	// x2 = -(b / a) * (1 + 1/(alpha^2+alpha))
-	x2 := f.Mul(mba, f.Add(One, f.Inv(f.Add(f.Square(alpha), alpha))))
+	x2 := F.Mul(mba, asqa1)
+
+	F.FreeInt(asqa1, asqa, asq)
 
 	//x3 = alpha * x2
-	x3 := f.Mul(alpha, x2)
+	x3 := F.Mul(alpha, x2)
+
+	F.FreeInt(alpha)
+
+	ax2 := F.Mul(a, x2)
+	x23 := F.Cube(x2)
+	x23ax2 := F.Add(x23, ax2)
 
 	// h2 = x2^3 + a*x2 + b
-	h2 := f.Add(f.Add(f.Cube(x2), f.Mul(a, x2)), b)
+	h2 := F.Add(x23ax2, b)
+
+	F.FreeInt(x23ax2, ax2, x23)
+
+	ax3 := F.Mul(a, x3)
+	x33 := F.Cube(x3)
+	x33ax3 := F.Add(x33, ax3)
+
 	// h3 = x3^3 + a*x3 + b
-	h3 := f.Add(f.Add(f.Cube(x3), f.Mul(a, x3)), b)
+	h3 := F.Add(x33ax3, b)
+
+	F.FreeInt(ax3, x33, x33ax3)
 
 	// tmp = h2 ^ ((p - 3) // 4)
-	tmp := f.Pow(h2, f.Div(f.Sub(p, Three), Four))
+	tmp := F.Pow(h2, p34)
+
+	tmp2 := F.Square(tmp)
+	tmp2h2 := F.Mul(tmp2, h2)
 
 	//if tmp^2 * h2 == 1:
-	if f.Mul(f.Square(tmp), h2).Cmp(One) == 0 {
+	if tmp2h2.Cmp(One) == 0 {
+		F.FreeInt(tmp2, tmp2h2)
+
 		// return (x2, tmp * h2 )
-		return x2, f.Mul(tmp, h2)
+		return x2, F.Mul(tmp, h2)
 	} else {
 		//return (x3, h3 ^ ((p+1)//4))
-		return x3, f.Pow(h3, f.Div(f.Add(p, One), Four))
+		return x3, F.Pow(h3, p14)
 	}
 }

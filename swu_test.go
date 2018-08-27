@@ -11,8 +11,14 @@ import (
 )
 
 var (
-	c = elliptic.P256()
+	c   = elliptic.P256()
+	buf = []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	t   = []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 )
+
+func init() {
+
+}
 
 func TestSWU(t *testing.T) {
 	for i := 0; i < 10000; i++ {
@@ -22,35 +28,26 @@ func TestSWU(t *testing.T) {
 		x, y := HashToPoint(b)
 
 		assert.True(t, elliptic.P256().IsOnCurve(x, y))
+		F.FreeInt(x, y)
 	}
 }
 
 func BenchmarkSWU(b *testing.B) {
-	b.ResetTimer()
-	buf := make([]byte, 32)
-	rand.Read(buf)
-
 	b.ReportAllocs()
-	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		HashToPoint(buf)
+		x, y := HashToPoint(buf)
+		F.FreeInt(x, y)
 	}
 }
 
 func BenchmarkTryInc(b *testing.B) {
-	b.ResetTimer()
-	buf := make([]byte, 32)
-	rand.Read(buf)
-
 	b.ReportAllocs()
-	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		HashIntoCurvePoint(buf)
 	}
 }
 
 func HashIntoCurvePoint(r []byte) (x, y *big.Int) {
-	t := make([]byte, 32)
 	copy(t, r)
 
 	x, y = tryPoint(t)
