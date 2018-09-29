@@ -28,15 +28,13 @@ func TestSWU(t *testing.T) {
 		x, y := HashToPoint(b)
 
 		assert.True(t, elliptic.P256().IsOnCurve(x, y))
-		F.FreeInt(x, y)
 	}
 }
 
 func BenchmarkSWU(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		x, y := HashToPoint(buf)
-		F.FreeInt(x, y)
+		HashToPoint(buf)
 	}
 }
 

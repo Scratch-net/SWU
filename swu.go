@@ -27,19 +27,17 @@ func init() {
 	p34 = F.Div(p3, Four)
 	p1 := F.Add(p, One)
 	p14 = F.Div(p1, Four)
-	F.FreeInt(p3, p1, ba)
 }
 
 func HashToPoint(data []byte) (x, y *big.Int) {
 
 	hash := sha256.Sum256(data)
 
-	t := F.NewInt().SetBytes(hash[:])
+	t := new(big.Int).SetBytes(hash[:])
 	t.Mod(t, p)
 
 	//alpha = -t^2
 	tt := F.Square(t)
-	F.FreeInt(t)
 
 	alpha := F.Neg(tt)
 
@@ -50,12 +48,8 @@ func HashToPoint(data []byte) (x, y *big.Int) {
 	// x2 = -(b / a) * (1 + 1/(alpha^2+alpha))
 	x2 := F.Mul(mba, asqa1)
 
-	F.FreeInt(asqa1, asqa, asq)
-
 	//x3 = alpha * x2
 	x3 := F.Mul(alpha, x2)
-
-	F.FreeInt(alpha)
 
 	ax2 := F.Mul(a, x2)
 	x23 := F.Cube(x2)
@@ -64,16 +58,12 @@ func HashToPoint(data []byte) (x, y *big.Int) {
 	// h2 = x2^3 + a*x2 + b
 	h2 := F.Add(x23ax2, b)
 
-	F.FreeInt(x23ax2, ax2, x23)
-
 	ax3 := F.Mul(a, x3)
 	x33 := F.Cube(x3)
 	x33ax3 := F.Add(x33, ax3)
 
 	// h3 = x3^3 + a*x3 + b
 	h3 := F.Add(x33ax3, b)
-
-	F.FreeInt(ax3, x33, x33ax3)
 
 	// tmp = h2 ^ ((p - 3) // 4)
 	tmp := F.Pow(h2, p34)
@@ -83,8 +73,6 @@ func HashToPoint(data []byte) (x, y *big.Int) {
 
 	//if tmp^2 * h2 == 1:
 	if tmp2h2.Cmp(One) == 0 {
-		F.FreeInt(tmp2, tmp2h2)
-
 		// return (x2, tmp * h2 )
 		return x2, F.Mul(tmp, h2)
 	} else {
